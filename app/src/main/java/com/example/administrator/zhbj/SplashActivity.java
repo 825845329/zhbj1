@@ -1,6 +1,7 @@
 package com.example.administrator.zhbj;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -8,6 +9,8 @@ import android.view.animation.AnimationSet;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
 import android.widget.RelativeLayout;
+
+import utils.PrefUtils;
 
 public class SplashActivity extends Activity {
 
@@ -43,5 +46,43 @@ public class SplashActivity extends Activity {
         set.addAnimation(animAlpha);
 
         rl_root.startAnimation(set);
+
+        set.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                // 动画结束,跳转页面
+                // 如果是第一次进入, 跳新手引导
+                // 否则跳主页面
+                boolean isFirstEnter = PrefUtils.getBoolean(
+                        SplashActivity.this, "is_first_enter", true);
+
+                Intent intent;
+                if (isFirstEnter) {
+                    // 新手引导
+                    intent = new Intent(getApplicationContext(),
+                            GuideActivity.class);
+                } else {
+                    // 主页面
+                    intent = new Intent(getApplicationContext(),
+                            MainActivity.class);
+                }
+
+                startActivity(intent);
+
+                finish();// 结束当前页面
+
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
     }
 }
