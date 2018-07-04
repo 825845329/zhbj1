@@ -6,7 +6,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioGroup;
 
+import com.example.administrator.zhbj.MainActivity;
 import com.example.administrator.zhbj.R;
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import java.util.ArrayList;
 
@@ -92,6 +94,14 @@ public class ContentFragment extends BaseFragment {
 			public void onPageSelected(int position) {
 				BasePager pager = mPagers.get(position);
 				pager.initData();
+				if (position == 0 || position == mPagers.size() - 1) {
+					// 首页和设置页要禁用侧边栏
+					setSlidingMenuEnable(false);
+				} else {
+					// 其他页面开启侧边栏
+					setSlidingMenuEnable(true);
+				}
+
 			}
 
 			@Override
@@ -108,8 +118,31 @@ public class ContentFragment extends BaseFragment {
 
 		// 手动加载第一页数据
 		mPagers.get(0).initData();
-
+		setSlidingMenuEnable(false);
 	}
+
+	/**
+	 * 开启或禁用侧边栏
+	 *
+	 * @param enable
+	 */
+	protected void setSlidingMenuEnable(boolean enable) {
+		// 获取侧边栏对象
+		MainActivity mainUI = (MainActivity) mActivity;
+		SlidingMenu slidingMenu = mainUI.getSlidingMenu();
+		if (enable) {
+			slidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+		} else {
+			slidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
+		}
+	}
+
+	// 获取新闻中心页面
+	public NewsCenterPager getNewsCenterPager() {
+		NewsCenterPager pager = (NewsCenterPager) mPagers.get(1);
+		return pager;
+	}
+
 
 	class ContentAdapter extends PagerAdapter {
 
@@ -126,7 +159,7 @@ public class ContentFragment extends BaseFragment {
 		@Override
 		public Object instantiateItem(ViewGroup container, int position) {
 			BasePager pager = mPagers.get(position);
-			pager.initData();
+//			pager.initData();
 			View view = pager.mRootView;// 获取当前页面对象的布局
 
 			// pager.initData();// 初始化数据, viewpager会默认加载下一个页面,

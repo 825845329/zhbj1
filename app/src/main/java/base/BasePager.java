@@ -5,7 +5,10 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import com.example.administrator.zhbj.MainActivity;
 import com.example.administrator.zhbj.R;
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 
 /**
@@ -36,7 +39,25 @@ public class BasePager {
 		btnMenu = (ImageButton) view.findViewById(R.id.btn_menu);
 		flContent = (FrameLayout) view.findViewById(R.id.fl_content);
 
+
+		btnMenu.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				toggle();
+			}
+		});
 		return view;
+	}
+
+
+	/**
+	 * 打开或者关闭侧边栏
+	 */
+	protected void toggle() {
+		MainActivity mainUI = (MainActivity) mActivity;
+		SlidingMenu slidingMenu = mainUI.getSlidingMenu();
+		slidingMenu.toggle();// 如果当前状态是开, 调用后就关; 反之亦然
 	}
 
 

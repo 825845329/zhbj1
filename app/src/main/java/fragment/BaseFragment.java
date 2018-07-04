@@ -7,6 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.administrator.zhbj.MainActivity;
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
+
 public abstract class BaseFragment extends Fragment {
 
 	public Activity mActivity;//这个activity就是MainActivity
@@ -16,6 +19,8 @@ public abstract class BaseFragment extends Fragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mActivity = getActivity();// 获取当前fragment所依赖的activity
+
+
 	}
 
 	// 初始化fragment的布局
@@ -33,6 +38,8 @@ public abstract class BaseFragment extends Fragment {
 		// 初始化数据
 		initData();
 	}
+
+
 
 	// 初始化布局, 必须由子类实现
 	public abstract View initView();
