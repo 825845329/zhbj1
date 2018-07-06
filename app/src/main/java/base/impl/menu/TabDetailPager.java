@@ -1,11 +1,14 @@
 package base.impl.menu;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Color;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
@@ -27,12 +30,16 @@ import com.lidroid.xutils.view.annotation.ViewInject;
 import com.viewpagerindicator.CirclePageIndicator;
 
 import java.util.ArrayList;
+import java.util.logging.Handler;
 
 import base.BaseMenuDetailPager;
 import domain.NewsMenu;
 import domain.NewsTabBean;
 import global.GlobalConstants;
 import utils.CacheUtils;
+import utils.PrefUtils;
+import view.NewsDetailActivity;
+import view.PullToRefreshListView;
 import view.TopNewsViewPager;
 
 /**
@@ -56,7 +63,7 @@ public class TabDetailPager extends BaseMenuDetailPager {
     private TextView tvTitle;
 
     @ViewInject(R.id.lv_list)
-    private ListView lvList;
+    private PullToRefreshListView lvList;
 
     private String mUrl;
 
@@ -64,6 +71,10 @@ public class TabDetailPager extends BaseMenuDetailPager {
     private ArrayList<NewsTabBean.NewsData> mNewsList;
 
     private NewsAdapter mNewsAdapter;
+
+    private String mMoreUrl;// 下一页数据链接
+
+    private Handler mHandler;
 
     public TabDetailPager(Activity activity, NewsMenu.NewsTabData newsTabData) {
         super(activity);
@@ -92,6 +103,66 @@ public class TabDetailPager extends BaseMenuDetailPager {
         ViewUtils.inject(this, mHeaderView);// 此处必须将头布局也注入
         lvList.addHeaderView(mHeaderView);
 
+        // 5. 前端界面设置回调
+        lvList.setOnRefreshListener(new PullToRefreshListView.OnRefreshListener() {
+
+            @Override
+            public void onRefresh() {
+                // 刷新数据
+                getDataFromServer();
+            }
+
+            @Override
+            public void onLoadMore() {
+
+                // 判断是否有下一页数据
+                if (mMoreUrl != null) {
+                    // 有下一页
+                    getMoreDataFromServer();
+                } else {
+                    // 没有下一页
+                    Toast.makeText(mActivity, "没有更多数据了", Toast.LENGTH_SHORT)
+                            .show();
+                    // 没有数据时也要收起控件
+                    lvList.onRefreshComplete(true);
+                }
+
+            }
+        });
+
+
+        lvList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                int headerViewsCount = lvList.getHeaderViewsCount();// 获取头布局数量
+                position = position - headerViewsCount;// 需要减去头布局的占位
+                System.out.println("第" + position + "个被点击了");
+
+                NewsTabBean.NewsData news = mNewsList.get(position);
+
+                // read_ids: 1101,1102,1105,1203,
+                String readIds = PrefUtils.getString(mActivity, "read_ids", "");
+
+                if (!readIds.contains(news.id + "")) {// 只有不包含当前id,才追加,
+                    // 避免重复添加同一个id
+                    readIds = readIds + news.id + ",";// 1101,1102,
+                    PrefUtils.setString(mActivity, "read_ids", readIds);
+                }
+
+                // 要将被点击的item的文字颜色改为灰色, 局部刷新, view对象就是当前被点击的对象
+                TextView tvTitle = (TextView) view.findViewById(R.id.tv_title);
+                tvTitle.setTextColor(Color.GRAY);
+                // mNewsAdapter.notifyDataSetChanged();//全局刷新, 浪费性能
+
+                // 跳到新闻详情页面
+                Intent intent = new Intent(mActivity, NewsDetailActivity.class);
+                intent.putExtra("url", news.url);
+                mActivity.startActivity(intent);
+            }
+        });
+
         return view;
     }
 
@@ -100,7 +171,7 @@ public class TabDetailPager extends BaseMenuDetailPager {
         // view.setText(mTabData.title);
         String cache = CacheUtils.getCache(mUrl, mActivity);
         if (!TextUtils.isEmpty(cache)) {
-            processData(cache);
+            processData(cache ,false);
         }
 
         getDataFromServer();
@@ -113,9 +184,12 @@ public class TabDetailPager extends BaseMenuDetailPager {
             @Override
             public void onSuccess(ResponseInfo<String> responseInfo) {
                 String result = responseInfo.result;
-                processData(result);
+                processData(result ,false);
 
                 CacheUtils.setCache(mUrl, result, mActivity);
+
+                // 收起下拉刷新控件
+                lvList.onRefreshComplete(true);
             }
 
             @Override
@@ -127,10 +201,47 @@ public class TabDetailPager extends BaseMenuDetailPager {
         });
     }
 
-    protected void processData(String result) {
+
+    /**
+     * 加载下一页数据
+     */
+    protected void getMoreDataFromServer() {
+        HttpUtils utils = new HttpUtils();
+        utils.send(HttpMethod.GET, mMoreUrl, new RequestCallBack<String>() {
+
+            @Override
+            public void onSuccess(ResponseInfo<String> responseInfo) {
+                String result = responseInfo.result;
+                processData(result, true);
+
+                // 收起下拉刷新控件
+                lvList.onRefreshComplete(true);
+            }
+
+            @Override
+            public void onFailure(HttpException error, String msg) {
+                // 请求失败
+                error.printStackTrace();
+                Toast.makeText(mActivity, msg, Toast.LENGTH_SHORT).show();
+
+                // 收起下拉刷新控件
+                lvList.onRefreshComplete(false);
+            }
+        });
+    }
+
+
+    protected void processData(String result , boolean isMore) {
         Gson gson = new Gson();
         NewsTabBean newsTabBean = gson.fromJson(result, NewsTabBean.class);
 
+        String moreUrl = newsTabBean.data.more;
+        if (!TextUtils.isEmpty(moreUrl)) {
+            mMoreUrl = GlobalConstants.SERVER_URL + moreUrl;
+        } else {
+            mMoreUrl = null;
+        }
+        if (!isMore) {
         // 头条新闻填充数据
         mTopNews = newsTabBean.data.topnews;
         if (mTopNews != null) {
@@ -160,18 +271,28 @@ public class TabDetailPager extends BaseMenuDetailPager {
                 }
             });
 
+        }
             // 更新第一个头条新闻标题
             tvTitle.setText(mTopNews.get(0).title);
             mIndicator.onPageSelected(0);// 默认让第一个选中(解决页面销毁后重新初始化时,Indicator仍然保留上次圆点位置的bug)
-        }
 
         // 列表新闻
         mNewsList = newsTabBean.data.news;
         if (mNewsList != null) {
             mNewsAdapter = new NewsAdapter();
             lvList.setAdapter(mNewsAdapter);
+         }
+
+        }else{
+            // 加载更多数据
+            ArrayList<NewsTabBean.NewsData> moreNews = newsTabBean.data.news;
+            mNewsList.addAll(moreNews);// 将数据追加在原来的集合中
+            // 刷新listview
+            mNewsAdapter.notifyDataSetChanged();
         }
     }
+
+
 
     // 头条新闻数据适配器
     class TopNewsAdapter extends PagerAdapter {
@@ -200,7 +321,8 @@ public class TabDetailPager extends BaseMenuDetailPager {
             // view.setImageResource(R.drawable.topnews_item_default);
             view.setScaleType(ScaleType.FIT_XY);// 设置图片缩放方式, 宽高填充父控件
 
-            String imageUrl = mTopNews.get(position).topimage;// 图片下载链接
+            String imageUrl = GlobalConstants.SERVER_URL2 + mTopNews.get(position).topimage;// 图片下载链接
+
 
             // 下载图片-将图片设置给imageview-避免内存溢出-缓存
             // BitmapUtils-XUtils
@@ -264,7 +386,15 @@ public class TabDetailPager extends BaseMenuDetailPager {
             holder.tvTitle.setText(news.title);
             holder.tvDate.setText(news.pubdate);
 
-            mBitmapUtils.display(holder.ivIcon, news.listimage);
+            // 根据本地记录来标记已读未读
+            String readIds = PrefUtils.getString(mActivity, "read_ids", "");
+            if (readIds.contains(news.id + "")) {
+                holder.tvTitle.setTextColor(Color.GRAY);
+            } else {
+                holder.tvTitle.setTextColor(Color.BLACK);
+            }
+
+            mBitmapUtils.display(holder.ivIcon,GlobalConstants.SERVER_URL2 + news.listimage);
 
             return convertView;
         }
