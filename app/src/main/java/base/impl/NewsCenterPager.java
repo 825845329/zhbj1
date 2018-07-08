@@ -138,7 +138,7 @@ public class NewsCenterPager extends BasePager {
 		mMenuDetailPagers = new ArrayList<BaseMenuDetailPager>();
 		mMenuDetailPagers.add(new NewsMenuDetailPager(mActivity, mNewsData.data.get(0).children));
 		mMenuDetailPagers.add(new TopicMenuDetailPager(mActivity));
-		mMenuDetailPagers.add(new PhotosMenuDetailPager(mActivity));
+		mMenuDetailPagers.add(new PhotosMenuDetailPager(mActivity, btnPhoto));
 		mMenuDetailPagers.add(new InteractMenuDetailPager(mActivity));
 //
 		// 将新闻菜单详情页设置为默认页面
@@ -157,10 +157,18 @@ public class NewsCenterPager extends BasePager {
 
 		flContent.addView(view);// 给帧布局添加布局
 
-		// 初始化页面数据
+		// 初始化页面数据`
 		pager.initData();
 
 		// 更新标题
 		tvTitle.setText(mNewsData.data.get(position).title);
+
+		// 如果是组图页面, 需要显示切换按钮
+		if (pager instanceof PhotosMenuDetailPager) {
+			btnPhoto.setVisibility(View.VISIBLE);
+		} else {
+			// 隐藏切换按钮
+			btnPhoto.setVisibility(View.GONE);
+		}
 	}
 }

@@ -29,7 +29,7 @@ import global.GlobalConstants;
  * @author Kevin
  * @date 2015-10-22
  */
-public class NewsDetailActivity extends Activity  {
+public class NewsDetailActivity extends Activity implements OnClickListener {
 
 	@ViewInject(R.id.ll_control)
 	private LinearLayout llControl;
@@ -60,9 +60,9 @@ public class NewsDetailActivity extends Activity  {
 		btnBack.setVisibility(View.VISIBLE);
 		btnMenu.setVisibility(View.GONE);
 
-//		btnBack.setOnClickListener(this);
-//		btnTextSize.setOnClickListener(this);
-//		btnShare.setOnClickListener(this);
+		btnBack.setOnClickListener(this);
+		btnTextSize.setOnClickListener(this);
+		btnShare.setOnClickListener(this);
 
 		mUrl = GlobalConstants.SERVER_URL2 + getIntent().getStringExtra("url");
 
@@ -80,7 +80,7 @@ public class NewsDetailActivity extends Activity  {
 			public void onPageStarted(WebView view, String url, Bitmap favicon) {
 				super.onPageStarted(view, url, favicon);
 				System.out.println("开始加载网页了");
-				pbLoading.setVisibility(View.VISIBLE);
+//				pbLoading.setVisibility(View.VISIBLE);
 			}
 
 			// 网页加载结束
@@ -120,92 +120,94 @@ public class NewsDetailActivity extends Activity  {
 		});
 	}
 
-//	@Override
-//	public void onClick(View v) {
-//		switch (v.getId()) {
-//		case R.id.btn_back:
-//			finish();
-//			break;
-//		case R.id.btn_textsize:
-//			// 修改网页字体大小
-//			showChooseDialog();
-//			break;
-//
-//		case R.id.btn_share:
-//			showShare();
-//			break;
-//
-//		default:
-//			break;
-//		}
-//	}
 
-//	private int mTempWhich;// 记录临时选择的字体大小(点击确定之前)
-//
-//	private int mCurrenWhich = 2;// 记录当前选中的字体大小(点击确定之后), 默认正常字体
-//
-//	/**
-//	 * 展示选择字体大小的弹窗
-//	 */
-//	private void showChooseDialog() {
-//		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//		builder.setTitle("字体设置");
-//
-//		String[] items = new String[] { "超大号字体", "大号字体", "正常字体", "小号字体",
-//				"超小号字体" };
-//
-//		builder.setSingleChoiceItems(items, mCurrenWhich,
-//				new DialogInterface.OnClickListener() {
-//
-//					@Override
-//					public void onClick(DialogInterface dialog, int which) {
-//						mTempWhich = which;
-//					}
-//				});
-//
-//		builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-//
-//			@Override
-//			public void onClick(DialogInterface dialog, int which) {
-//				// 根据选择的字体来修改网页字体大小
-//
-//				WebSettings settings = mWebView.getSettings();
-//
-//				switch (mTempWhich) {
-//				case 0:
-//					// 超大字体
-//					settings.setTextSize(TextSize.LARGEST);
-//					// settings.setTextZoom(22);
-//					break;
-//				case 1:
-//					// 大字体
-//					settings.setTextSize(TextSize.LARGER);
-//					break;
-//				case 2:
-//					// 正常字体
-//					settings.setTextSize(TextSize.NORMAL);
-//					break;
-//				case 3:
-//					// 小字体
-//					settings.setTextSize(TextSize.SMALLER);
-//					break;
-//				case 4:
-//					// 超小字体
-//					settings.setTextSize(TextSize.SMALLEST);
-//					break;
-//
-//				default:
-//					break;
-//				}
-//
-//				mCurrenWhich = mTempWhich;
-//			}
-//		});
-//
-//		builder.setNegativeButton("取消", null);
-//
-//		builder.show();
-//	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.btn_back:
+			finish();
+			break;
+		case R.id.btn_textsize:
+			// 修改网页字体大小
+			showChooseDialog();
+			break;
+
+		case R.id.btn_share:
+//			showShare();
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	private int mTempWhich;// 记录临时选择的字体大小(点击确定之前)
+
+	private int mCurrenWhich = 2;// 记录当前选中的字体大小(点击确定之后), 默认正常字体
+
+	/**
+	 * 展示选择字体大小的弹窗
+	 */
+	private void showChooseDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("字体设置");
+
+		String[] items = new String[] { "超大号字体", "大号字体", "正常字体", "小号字体",
+				"超小号字体" };
+
+		builder.setSingleChoiceItems(items, mCurrenWhich,
+				new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						mTempWhich = which;
+					}
+				});
+
+		builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// 根据选择的字体来修改网页字体大小
+
+				WebSettings settings = mWebView.getSettings();
+
+				switch (mTempWhich) {
+				case 0:
+					// 超大字体
+					settings.setTextSize(TextSize.LARGEST);
+					// settings.setTextZoom(22);
+					break;
+				case 1:
+					// 大字体
+					settings.setTextSize(TextSize.LARGER);
+					break;
+				case 2:
+					// 正常字体
+					settings.setTextSize(TextSize.NORMAL);
+					break;
+				case 3:
+					// 小字体
+					settings.setTextSize(TextSize.SMALLER);
+					break;
+				case 4:
+					// 超小字体
+					settings.setTextSize(TextSize.SMALLEST);
+					break;
+
+				default:
+					break;
+				}
+
+				mCurrenWhich = mTempWhich;
+			}
+		});
+
+		builder.setNegativeButton("取消", null);
+
+		builder.show();
+	}
 //
 //	// 确保SDcard下面存在此张图片test.jpg
 //	private void showShare() {
